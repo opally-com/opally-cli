@@ -112,7 +112,7 @@ opally analytics agent-actions [--from <date>] [--to <date>] [--interval <day|we
 ## Notes
 
 - All dates are ISO 8601 format (e.g., `2026-03-01`)
-- Date ranges are capped at 90 days
+- Date ranges are capped at 365 days
 - Use `--json` for machine-readable output (recommended for automated workflows)
 - Pagination: use `--cursor` with the cursor returned from list commands
 - Default limit is 25 results, max 100
