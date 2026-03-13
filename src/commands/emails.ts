@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { api, validateId, type PaginatedResponse, type SingleResponse } from "../client.js";
-import { output } from "../output.js";
+import { output, getFormat } from "../output.js";
 
 interface EmailLog {
   id: string;
@@ -34,6 +34,7 @@ emailsCommand
   .option("--cursor <cursor>", "Pagination cursor")
   .option("--json", "Output as JSON")
   .action(async (opts) => {
+    const fmt = getFormat(opts);
     const res = await api<PaginatedResponse<EmailLog>>("/conversations/emails", {
       from: opts.from,
       to: opts.to,
@@ -41,14 +42,14 @@ emailsCommand
       limit: opts.limit,
       cursor: opts.cursor,
     });
-    output(res.data, opts.json ? "json" : "table", [
+    output(res.data, fmt, [
       "id",
       "subject",
       "sender",
       "status",
       "timestamp",
     ]);
-    if (res.pagination.has_more) {
+    if (fmt === "table" && res.pagination.has_more) {
       console.log(`\nMore results available. Use --cursor ${res.pagination.next_cursor}`);
     }
   });
@@ -58,10 +59,11 @@ emailsCommand
   .description("Get email details with draft")
   .option("--json", "Output as JSON")
   .action(async (id: string, opts) => {
+    const fmt = getFormat(opts);
     const res = await api<SingleResponse<EmailDetail>>(`/conversations/emails/${validateId(id)}`);
     const data = res.data;
 
-    if (opts.json) {
+    if (fmt === "json") {
       output(data, "json");
       return;
     }

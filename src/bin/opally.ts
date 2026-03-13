@@ -7,6 +7,7 @@ import { emailsCommand } from "../commands/emails.js";
 import { chatsCommand } from "../commands/chats.js";
 import { voiceCommand } from "../commands/voice.js";
 import { analyticsCommand } from "../commands/analytics.js";
+import { doctorCommand } from "../commands/doctor.js";
 
 const program = new Command();
 
@@ -21,5 +22,6 @@ program.addCommand(emailsCommand);
 program.addCommand(chatsCommand);
 program.addCommand(voiceCommand);
 program.addCommand(analyticsCommand);
+program.addCommand(doctorCommand);
 
 program.parse();

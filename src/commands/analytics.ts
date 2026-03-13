@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { api } from "../client.js";
-import { output } from "../output.js";
+import { output, getFormat } from "../output.js";
 
 interface AnalyticsResponse {
   period: { from: string; to: string };
@@ -23,12 +23,13 @@ analyticsCommand
   .option("--to <date>", "End date (ISO 8601)")
   .option("--json", "Output as JSON")
   .action(async (opts) => {
+    const fmt = getFormat(opts);
     const res = await api<AnalyticsResponse>("/analytics/overview", {
       from: opts.from,
       to: opts.to,
     });
 
-    if (opts.json) {
+    if (fmt === "json") {
       output(res, "json");
       return;
     }
@@ -77,6 +78,7 @@ function addTimeSeriesCommand(
   }
 
   cmd.action(async (opts) => {
+    const fmt = getFormat(opts);
     const params: Record<string, string | undefined> = {
       from: opts.from,
       to: opts.to,
@@ -91,7 +93,7 @@ function addTimeSeriesCommand(
 
     const res = await api<TimeSeriesResponse>(path, params);
 
-    if (opts.json) {
+    if (fmt === "json") {
       output(res, "json");
       return;
     }

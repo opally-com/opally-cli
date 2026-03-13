@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { api, validateId, type PaginatedResponse, type SingleResponse } from "../client.js";
-import { output } from "../output.js";
+import { output, getFormat } from "../output.js";
 
 interface Chat {
   id: string;
@@ -35,6 +35,7 @@ chatsCommand
   .option("--cursor <cursor>", "Pagination cursor")
   .option("--json", "Output as JSON")
   .action(async (opts) => {
+    const fmt = getFormat(opts);
     const res = await api<PaginatedResponse<Chat>>("/conversations/chats", {
       from: opts.from,
       to: opts.to,
@@ -42,14 +43,14 @@ chatsCommand
       limit: opts.limit,
       cursor: opts.cursor,
     });
-    output(res.data, opts.json ? "json" : "table", [
+    output(res.data, fmt, [
       "id",
       "title",
       "platform",
       "language",
       "created_at",
     ]);
-    if (res.pagination.has_more) {
+    if (fmt === "table" && res.pagination.has_more) {
       console.log(`\nMore results available. Use --cursor ${res.pagination.next_cursor}`);
     }
   });
@@ -59,10 +60,11 @@ chatsCommand
   .description("Get chat conversation details")
   .option("--json", "Output as JSON")
   .action(async (id: string, opts) => {
+    const fmt = getFormat(opts);
     const res = await api<SingleResponse<ChatDetail>>(`/conversations/chats/${validateId(id)}`);
     const data = res.data;
 
-    if (opts.json) {
+    if (fmt === "json") {
       output(data, "json");
       return;
     }
@@ -80,13 +82,14 @@ chatsCommand
   .description("Get messages in a chat conversation")
   .option("--json", "Output as JSON")
   .action(async (id: string, opts) => {
+    const fmt = getFormat(opts);
     const res = await api<SingleResponse<{ conversation_id: string; messages: Message[] }>>(
       `/conversations/chats/${validateId(id)}/messages`
     );
 
     const messages = res.data.messages;
 
-    if (opts.json) {
+    if (fmt === "json") {
       output(messages, "json");
       return;
     }

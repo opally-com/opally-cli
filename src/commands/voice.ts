@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { api, validateId, type PaginatedResponse, type SingleResponse } from "../client.js";
-import { output } from "../output.js";
+import { output, getFormat } from "../output.js";
 
 interface VoiceCall {
   id: string;
@@ -27,13 +27,14 @@ voiceCommand
   .option("--cursor <cursor>", "Pagination cursor")
   .option("--json", "Output as JSON")
   .action(async (opts) => {
+    const fmt = getFormat(opts);
     const res = await api<PaginatedResponse<VoiceCall>>("/conversations/voice", {
       from: opts.from,
       to: opts.to,
       limit: opts.limit,
       cursor: opts.cursor,
     });
-    output(res.data, opts.json ? "json" : "table", [
+    output(res.data, fmt, [
       "id",
       "from_number",
       "to_number",
@@ -41,7 +42,7 @@ voiceCommand
       "status",
       "started_at",
     ]);
-    if (res.pagination.has_more) {
+    if (fmt === "table" && res.pagination.has_more) {
       console.log(`\nMore results available. Use --cursor ${res.pagination.next_cursor}`);
     }
   });
@@ -51,10 +52,11 @@ voiceCommand
   .description("Get voice call details")
   .option("--json", "Output as JSON")
   .action(async (id: string, opts) => {
+    const fmt = getFormat(opts);
     const res = await api<SingleResponse<VoiceDetail>>(`/conversations/voice/${validateId(id)}`);
     const data = res.data;
 
-    if (opts.json) {
+    if (fmt === "json") {
       output(data, "json");
       return;
     }

@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { api, validateId, type PaginatedResponse, type SingleResponse } from "../client.js";
-import { output } from "../output.js";
+import { output, getFormat } from "../output.js";
 
 interface Lead {
   id: string;
@@ -35,6 +35,7 @@ leadsCommand
   .option("--cursor <cursor>", "Pagination cursor")
   .option("--json", "Output as JSON")
   .action(async (opts) => {
+    const fmt = getFormat(opts);
     const res = await api<PaginatedResponse<Lead>>("/leads", {
       from: opts.from,
       to: opts.to,
@@ -42,14 +43,14 @@ leadsCommand
       limit: opts.limit,
       cursor: opts.cursor,
     });
-    output(res.data, opts.json ? "json" : "table", [
+    output(res.data, fmt, [
       "id",
       "name",
       "email",
       "source",
       "created_at",
     ]);
-    if (res.pagination.has_more) {
+    if (fmt === "table" && res.pagination.has_more) {
       console.log(`\nMore results available. Use --cursor ${res.pagination.next_cursor}`);
     }
   });
@@ -60,5 +61,5 @@ leadsCommand
   .option("--json", "Output as JSON")
   .action(async (id: string, opts) => {
     const res = await api<SingleResponse<LeadDetail>>(`/leads/${validateId(id)}`);
-    output(res.data, opts.json ? "json" : "table");
+    output(res.data, getFormat(opts));
   });

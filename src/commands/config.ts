@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { loadConfig, saveConfig } from "../config.js";
+import { loadConfig, saveConfig, getBaseUrl } from "../config.js";
 
 export const configCommand = new Command("config")
   .description("Manage CLI configuration");
@@ -7,7 +7,7 @@ export const configCommand = new Command("config")
 configCommand
   .command("set-key <key>")
   .description("Save your Opally API key")
-  .action((key: string) => {
+  .action(async (key: string) => {
     if (!key.startsWith("op_live_") && !key.startsWith("op_test_")) {
       console.error("Invalid key format. Expected op_live_* or op_test_*");
       process.exit(1);
@@ -16,6 +16,24 @@ configCommand
       console.error("Invalid key format. Key is too short.");
       process.exit(1);
     }
+
+    // Validate key against the API
+    const baseUrl = getBaseUrl();
+    try {
+      const res = await fetch(new URL("/v1/analytics/overview", baseUrl).toString(), {
+        headers: { Authorization: `Bearer ${key}` },
+      });
+      if (res.status === 401 || res.status === 403) {
+        console.error("Invalid API key. The key was rejected by the Opally API.");
+        process.exit(1);
+      }
+      if (!res.ok) {
+        console.error(`Warning: Could not validate key (HTTP ${res.status}). Saving anyway.`);
+      }
+    } catch {
+      console.error("Warning: Could not reach the Opally API to validate key. Saving anyway.");
+    }
+
     const config = loadConfig();
     config.api_key = key;
     saveConfig(config);

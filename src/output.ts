@@ -37,6 +37,15 @@ export function json(data: unknown): void {
   console.log(JSON.stringify(data, null, 2));
 }
 
+/**
+ * Resolve output format: --json flag wins, otherwise auto-detect
+ * based on whether stdout is a TTY (terminal = table, piped = json).
+ */
+export function getFormat(opts: { json?: boolean }): "table" | "json" {
+  if (opts.json) return "json";
+  return process.stdout.isTTY ? "table" : "json";
+}
+
 export function output(
   data: unknown,
   format: "table" | "json",
