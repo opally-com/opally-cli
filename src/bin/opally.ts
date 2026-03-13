@@ -13,7 +13,7 @@ const program = new Command();
 program
   .name("opally")
   .description("CLI for the Opally API")
-  .version("0.1.0");
+  .version("0.1.1");
 
 program.addCommand(configCommand);
 program.addCommand(leadsCommand);
