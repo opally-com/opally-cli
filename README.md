@@ -1,6 +1,6 @@
 # @opally/cli
 
-CLI for the [Opally API](https://docs.opally.com) — query guest conversations, emails, voice calls, leads, and analytics from your terminal.
+CLI for the [Opally API](https://opally.gitbook.io/opally-api-docs) — query guest conversations, emails, voice calls, leads, and analytics from your terminal.
 
 ## Install
 
@@ -77,7 +77,7 @@ All commands support `--json` for machine-readable output.
 
 ## Documentation
 
-Full API documentation: [docs.opally.com](https://docs.opally.com)
+Full API documentation: [docs.opally.com](https://opally.gitbook.io/opally-api-docs)
 
 ## License
 
