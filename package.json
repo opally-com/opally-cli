@@ -1,6 +1,6 @@
 {
   "name": "@opally/cli",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "CLI for the Opally API — query guest conversations, emails, voice calls, leads, and analytics.",
   "bin": {
     "opally": "./dist/bin/opally.js"
