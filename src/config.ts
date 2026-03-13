@@ -45,6 +45,6 @@ export function getBaseUrl(): string {
   return (
     process.env.OPALLY_BASE_URL ||
     loadConfig().base_url ||
-    "https://app.opally.ai"
+    "https://api.opally.com"
   );
 }

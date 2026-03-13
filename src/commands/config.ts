@@ -48,5 +48,5 @@ configCommand
   .action(() => {
     const config = loadConfig();
     console.log(`API key: ${config.api_key ? config.api_key.slice(0, 12) + "..." : "(not set)"}`);
-    console.log(`Base URL: ${config.base_url || "https://app.opally.ai (default)"}`);
+    console.log(`Base URL: ${config.base_url || "https://api.opally.com (default)"}`);
   });
