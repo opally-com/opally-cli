@@ -109,10 +109,17 @@ Time-series metrics for autonomous agent actions (bookings, modifications, etc).
 opally analytics agent-actions [--from <date>] [--to <date>] [--interval <day|week|month>] [--action-type <type>] [--status <status>] [--initiator <channel>] [--json]
 ```
 
+### doctor
+Run environment diagnostics (CLI version, API key, connectivity).
+```bash
+opally doctor [--json]
+```
+
 ## Notes
 
 - All dates are ISO 8601 format (e.g., `2026-03-01`)
 - Date ranges are capped at 365 days
-- Use `--json` for machine-readable output (recommended for automated workflows)
+- Output is automatically JSON when piped or used by AI agents (no `--json` flag needed)
+- Use `--json` to force JSON output in a terminal
 - Pagination: use `--cursor` with the cursor returned from list commands
 - Default limit is 25 results, max 100

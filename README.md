@@ -50,7 +50,7 @@ opally analytics overview --from 2026-03-01 --to 2026-03-31
 opally analytics emails --interval week --status draft_created
 ```
 
-All commands support `--json` for machine-readable output.
+Output is automatically JSON when piped or used by AI agents. Use `--json` to force JSON in a terminal.
 
 ## Commands
 
@@ -71,9 +71,10 @@ All commands support `--json` for machine-readable output.
 | `opally analytics voice` | Voice metrics over time |
 | `opally analytics leads` | Lead metrics over time |
 | `opally analytics agent-actions` | Agent action metrics over time |
-| `opally config set-key <key>` | Save API key |
+| `opally config set-key <key>` | Save API key (validated against API) |
 | `opally config set-url <url>` | Set custom API base URL |
 | `opally config show` | Show current configuration |
+| `opally doctor` | Run environment diagnostics |
 
 ## Documentation
 
