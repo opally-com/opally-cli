@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { loadConfig, getBaseUrl } from "../config.js";
 import { json } from "../output.js";
 
-const VERSION = "0.2.0";
+const VERSION = "0.2.1";
 
 interface Check {
   name: string;
