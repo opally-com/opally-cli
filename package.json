@@ -1,0 +1,45 @@
+{
+  "name": "@opally/cli",
+  "version": "0.1.0",
+  "description": "CLI for the Opally API — query guest conversations, emails, voice calls, leads, and analytics.",
+  "bin": {
+    "opally": "./dist/bin/opally.js"
+  },
+  "files": [
+    "dist",
+    "SKILL.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/bin/opally.ts",
+    "start": "node dist/bin/opally.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "opally",
+    "hospitality",
+    "hotel",
+    "cli",
+    "api"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/opally-com/opally-cli.git"
+  },
+  "homepage": "https://github.com/opally-com/opally-cli#readme",
+  "bugs": {
+    "url": "https://github.com/opally-com/opally-cli/issues"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^22.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

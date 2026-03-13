@@ -1,0 +1,117 @@
+import { Command } from "commander";
+import { api, validateId, type PaginatedResponse, type SingleResponse } from "../client.js";
+import { output } from "../output.js";
+
+interface Chat {
+  id: string;
+  title: string;
+  platform: string;
+  language: string;
+  created_at: string;
+}
+
+interface ChatDetail extends Chat {
+  guest_email: string | null;
+  message_count: number;
+}
+
+interface Message {
+  id: string;
+  role: string;
+  content: string;
+  created_at: string;
+}
+
+export const chatsCommand = new Command("chats")
+  .description("View chat conversations");
+
+chatsCommand
+  .command("list")
+  .description("List chat conversations")
+  .option("--from <date>", "Start date (ISO 8601)")
+  .option("--to <date>", "End date (ISO 8601)")
+  .option("--platform <platform>", "Filter: webchat, whatsapp, messenger, instagram")
+  .option("--limit <n>", "Results per page (1-100)")
+  .option("--cursor <cursor>", "Pagination cursor")
+  .option("--json", "Output as JSON")
+  .action(async (opts) => {
+    const res = await api<PaginatedResponse<Chat>>("/conversations/chats", {
+      from: opts.from,
+      to: opts.to,
+      platform: opts.platform,
+      limit: opts.limit,
+      cursor: opts.cursor,
+    });
+    output(res.data, opts.json ? "json" : "table", [
+      "id",
+      "title",
+      "platform",
+      "language",
+      "created_at",
+    ]);
+    if (res.pagination.has_more) {
+      console.log(`\nMore results available. Use --cursor ${res.pagination.next_cursor}`);
+    }
+  });
+
+chatsCommand
+  .command("get <id>")
+  .description("Get chat conversation details")
+  .option("--json", "Output as JSON")
+  .action(async (id: string, opts) => {
+    const res = await api<SingleResponse<ChatDetail>>(`/conversations/chats/${validateId(id)}`);
+    const data = res.data;
+
+    if (opts.json) {
+      output(data, "json");
+      return;
+    }
+
+    console.log(`Title:     ${data.title}`);
+    console.log(`Platform:  ${data.platform}`);
+    console.log(`Language:  ${data.language}`);
+    console.log(`Guest:     ${data.guest_email || "(unknown)"}`);
+    console.log(`Messages:  ${data.message_count}`);
+    console.log(`Created:   ${data.created_at}`);
+  });
+
+chatsCommand
+  .command("messages <id>")
+  .description("Get messages in a chat conversation")
+  .option("--json", "Output as JSON")
+  .action(async (id: string, opts) => {
+    const res = await api<SingleResponse<{ conversation_id: string; messages: Message[] }>>(
+      `/conversations/chats/${validateId(id)}/messages`
+    );
+
+    const messages = res.data.messages;
+
+    if (opts.json) {
+      output(messages, "json");
+      return;
+    }
+
+    for (const msg of messages) {
+      const role = msg.role === "assistant" ? "Opally" : "Guest";
+      const time = new Date(msg.created_at).toLocaleString();
+
+      // Message content may be JSON-encoded chat parts
+      let text = msg.content;
+      try {
+        const parts = JSON.parse(msg.content);
+        if (Array.isArray(parts)) {
+          text = parts
+            .flatMap((p: { parts?: { type: string; text?: string }[] }) =>
+              (p.parts || []).filter((pt) => pt.type === "text").map((pt) => pt.text)
+            )
+            .filter(Boolean)
+            .join("\n") || text;
+        }
+      } catch {
+        // Plain text content, use as-is
+      }
+
+      console.log(`[${time}] ${role}:`);
+      console.log(`  ${text}\n`);
+    }
+  });
