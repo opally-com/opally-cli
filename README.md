@@ -77,7 +77,7 @@ All commands support `--json` for machine-readable output.
 
 ## Documentation
 
-Full API documentation: [docs.opally.com](https://opally.gitbook.io/opally-api-docs)
+Full API documentation: [opally.gitbook.io/opally-api-docs](https://opally.gitbook.io/opally-api-docs)
 
 ## License
 

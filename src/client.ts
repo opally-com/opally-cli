@@ -32,7 +32,7 @@ export async function api<T>(
   params?: Record<string, string | undefined>
 ): Promise<T> {
   const baseUrl = getBaseUrl();
-  const url = new URL(`/api/v1${path}`, baseUrl);
+  const url = new URL(`/v1${path}`, baseUrl);
 
   if (params) {
     for (const [key, value] of Object.entries(params)) {
