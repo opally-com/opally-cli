@@ -1,3 +1,5 @@
+import pc from "picocolors";
+
 function formatValue(val: unknown): string {
   if (val === null || val === undefined) return "";
   if (typeof val === "object") return JSON.stringify(val);
@@ -9,7 +11,7 @@ export function table(
   columns?: string[]
 ): void {
   if (rows.length === 0) {
-    console.log("No results.");
+    console.log(pc.dim("No results."));
     return;
   }
 
@@ -24,8 +26,8 @@ export function table(
   );
 
   // Header
-  const header = cols.map((col, i) => col.padEnd(widths[i])).join("  ");
-  const separator = widths.map((w) => "─".repeat(w)).join("──");
+  const header = cols.map((col, i) => pc.bold(col.padEnd(widths[i]))).join("  ");
+  const separator = pc.dim(widths.map((w) => "─".repeat(w)).join("──"));
 
   console.log(header);
   console.log(separator);
@@ -43,12 +45,18 @@ export function json(data: unknown): void {
   console.log(JSON.stringify(data, null, 2));
 }
 
+export interface GlobalOpts {
+  json?: boolean;
+  quiet?: boolean;
+  apiKey?: string;
+}
+
 /**
- * Resolve output format: --json flag wins, otherwise auto-detect
+ * Resolve output format: --json/--quiet flag wins, otherwise auto-detect
  * based on whether stdout is a TTY (terminal = table, piped = json).
  */
-export function getFormat(opts: { json?: boolean }): "table" | "json" {
-  if (opts.json) return "json";
+export function getFormat(opts: GlobalOpts): "table" | "json" {
+  if (opts.json || opts.quiet) return "json";
   return process.stdout.isTTY ? "table" : "json";
 }
 
@@ -63,5 +71,21 @@ export function output(
     table(data as Record<string, unknown>[], columns);
   } else {
     json(data);
+  }
+}
+
+export function outputError(message: string, opts?: GlobalOpts): never {
+  const isJson = opts?.json || opts?.quiet || !process.stderr.isTTY;
+  if (isJson) {
+    console.error(JSON.stringify({ error: { message } }));
+  } else {
+    console.error(`${pc.red("Error:")} ${message}`);
+  }
+  process.exit(1);
+}
+
+export function paginationHint(cursor: string | null): void {
+  if (cursor && process.stdout.isTTY) {
+    console.log(pc.dim(`\nMore results available. Use --cursor ${cursor}`));
   }
 }

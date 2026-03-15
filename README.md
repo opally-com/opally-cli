@@ -11,10 +11,12 @@ npm install -g @opally/cli
 ## Setup
 
 ```bash
-opally config set-key op_live_YOUR_KEY_HERE
+opally login op_live_YOUR_KEY_HERE
 ```
 
 Get your API key from the Opally dashboard under **Integrations > Developer > API Access**.
+
+Running `opally login` without a key will open the dashboard in your browser.
 
 Or use an environment variable:
 
@@ -50,12 +52,21 @@ opally analytics overview --from 2026-03-01 --to 2026-03-31
 opally analytics emails --interval week --status draft_created
 ```
 
-Output is automatically JSON when piped or used by AI agents. Use `--json` to force JSON in a terminal.
+Output is automatically JSON when piped or used by AI agents. Use `--json` to force JSON in a terminal, or `-q/--quiet` to suppress all non-data output.
+
+## Global Options
+
+| Option | Description |
+|--------|-------------|
+| `--api-key <key>` | Override API key for this command |
+| `--json` | Force JSON output |
+| `-q, --quiet` | Suppress spinners and non-data output (implies `--json`) |
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
+| `opally login [key]` | Authenticate with the Opally API |
 | `opally emails list` | List email logs |
 | `opally emails get <id>` | Email details with AI draft |
 | `opally chats list` | List chat conversations |
@@ -71,7 +82,6 @@ Output is automatically JSON when piped or used by AI agents. Use `--json` to fo
 | `opally analytics voice` | Voice metrics over time |
 | `opally analytics leads` | Lead metrics over time |
 | `opally analytics agent-actions` | Agent action metrics over time |
-| `opally config set-key <key>` | Save API key (validated against API) |
 | `opally config set-url <url>` | Set custom API base URL |
 | `opally config show` | Show current configuration |
 | `opally doctor` | Run environment diagnostics |

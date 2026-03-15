@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { api, validateId, type PaginatedResponse, type SingleResponse } from "../client.js";
-import { output, getFormat } from "../output.js";
+import { output, getFormat, paginationHint, type GlobalOpts } from "../output.js";
+import { withSpinner } from "../lib/spinner.js";
 
 interface Chat {
   id: string;
@@ -33,35 +34,33 @@ chatsCommand
   .option("--platform <platform>", "Filter: webchat, whatsapp, messenger, instagram")
   .option("--limit <n>", "Results per page (1-100)")
   .option("--cursor <cursor>", "Pagination cursor")
-  .option("--json", "Output as JSON")
-  .action(async (opts) => {
-    const fmt = getFormat(opts);
-    const res = await api<PaginatedResponse<Chat>>("/conversations/chats", {
-      from: opts.from,
-      to: opts.to,
-      platform: opts.platform,
-      limit: opts.limit,
-      cursor: opts.cursor,
-    });
-    output(res.data, fmt, [
-      "id",
-      "title",
-      "platform",
-      "language",
-      "created_at",
-    ]);
-    if (fmt === "table" && res.pagination.has_more) {
-      console.log(`\nMore results available. Use --cursor ${res.pagination.next_cursor}`);
-    }
+  .action(async (opts, cmd) => {
+    const globals: GlobalOpts = cmd.optsWithGlobals();
+    const fmt = getFormat(globals);
+    const res = await withSpinner(
+      { loading: "Fetching chats...", success: "Chats loaded", fail: "Failed to fetch chats" },
+      () => api<PaginatedResponse<Chat>>("/conversations/chats", {
+        from: opts.from,
+        to: opts.to,
+        platform: opts.platform,
+        limit: opts.limit,
+        cursor: opts.cursor,
+      }, globals.apiKey)
+    );
+    output(res.data, fmt, ["id", "title", "platform", "language", "created_at"]);
+    if (fmt === "table") paginationHint(res.pagination.next_cursor);
   });
 
 chatsCommand
   .command("get <id>")
   .description("Get chat conversation details")
-  .option("--json", "Output as JSON")
-  .action(async (id: string, opts) => {
-    const fmt = getFormat(opts);
-    const res = await api<SingleResponse<ChatDetail>>(`/conversations/chats/${validateId(id)}`);
+  .action(async (id: string, opts, cmd) => {
+    const globals: GlobalOpts = cmd.optsWithGlobals();
+    const fmt = getFormat(globals);
+    const res = await withSpinner(
+      { loading: "Fetching chat...", success: "Chat loaded", fail: "Failed to fetch chat" },
+      () => api<SingleResponse<ChatDetail>>(`/conversations/chats/${validateId(id)}`, undefined, globals.apiKey)
+    );
     const data = res.data;
 
     if (fmt === "json") {
@@ -80,11 +79,14 @@ chatsCommand
 chatsCommand
   .command("messages <id>")
   .description("Get messages in a chat conversation")
-  .option("--json", "Output as JSON")
-  .action(async (id: string, opts) => {
-    const fmt = getFormat(opts);
-    const res = await api<SingleResponse<{ conversation_id: string; messages: Message[] }>>(
-      `/conversations/chats/${validateId(id)}/messages`
+  .action(async (id: string, opts, cmd) => {
+    const globals: GlobalOpts = cmd.optsWithGlobals();
+    const fmt = getFormat(globals);
+    const res = await withSpinner(
+      { loading: "Fetching messages...", success: "Messages loaded", fail: "Failed to fetch messages" },
+      () => api<SingleResponse<{ conversation_id: string; messages: Message[] }>>(
+        `/conversations/chats/${validateId(id)}/messages`, undefined, globals.apiKey
+      )
     );
 
     const messages = res.data.messages;

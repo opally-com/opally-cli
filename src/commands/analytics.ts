@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { api } from "../client.js";
-import { output, getFormat } from "../output.js";
+import { output, getFormat, type GlobalOpts } from "../output.js";
+import { withSpinner } from "../lib/spinner.js";
 
 interface AnalyticsResponse {
   period: { from: string; to: string };
@@ -21,13 +22,16 @@ analyticsCommand
   .description("High-level summary of all activity")
   .option("--from <date>", "Start date (ISO 8601)")
   .option("--to <date>", "End date (ISO 8601)")
-  .option("--json", "Output as JSON")
-  .action(async (opts) => {
-    const fmt = getFormat(opts);
-    const res = await api<AnalyticsResponse>("/analytics/overview", {
-      from: opts.from,
-      to: opts.to,
-    });
+  .action(async (opts, cmd) => {
+    const globals: GlobalOpts = cmd.optsWithGlobals();
+    const fmt = getFormat(globals);
+    const res = await withSpinner(
+      { loading: "Fetching overview...", success: "Overview loaded", fail: "Failed to fetch overview" },
+      () => api<AnalyticsResponse>("/analytics/overview", {
+        from: opts.from,
+        to: opts.to,
+      }, globals.apiKey)
+    );
 
     if (fmt === "json") {
       output(res, "json");
@@ -69,8 +73,7 @@ function addTimeSeriesCommand(
     .description(description)
     .option("--from <date>", "Start date (ISO 8601)")
     .option("--to <date>", "End date (ISO 8601)")
-    .option("--interval <interval>", "Granularity: day, week, month", "day")
-    .option("--json", "Output as JSON");
+    .option("--interval <interval>", "Granularity: day, week, month", "day");
 
   if (extraFilters) {
     for (const f of extraFilters) {
@@ -78,8 +81,9 @@ function addTimeSeriesCommand(
     }
   }
 
-  cmd.action(async (opts) => {
-    const fmt = getFormat(opts);
+  cmd.action(async (opts, cmdInstance) => {
+    const globals: GlobalOpts = cmdInstance.optsWithGlobals();
+    const fmt = getFormat(globals);
     const params: Record<string, string | undefined> = {
       from: opts.from,
       to: opts.to,
@@ -92,7 +96,10 @@ function addTimeSeriesCommand(
       }
     }
 
-    const res = await api<TimeSeriesResponse>(path, params);
+    const res = await withSpinner(
+      { loading: `Fetching ${name} analytics...`, success: `${name} analytics loaded`, fail: `Failed to fetch ${name} analytics` },
+      () => api<TimeSeriesResponse>(path, params, globals.apiKey)
+    );
 
     if (fmt === "json") {
       output(res, "json");

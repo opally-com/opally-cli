@@ -1,8 +1,8 @@
 import { Command } from "commander";
-import { loadConfig, getBaseUrl } from "../config.js";
-import { json } from "../output.js";
-
-const VERSION = "0.2.2";
+import { resolveApiKey, getBaseUrl, maskKey } from "../config.js";
+import { json, type GlobalOpts } from "../output.js";
+import { getVersion } from "../lib/version.js";
+import pc from "picocolors";
 
 interface Check {
   name: string;
@@ -12,36 +12,33 @@ interface Check {
 
 export const doctorCommand = new Command("doctor")
   .description("Run environment diagnostics")
-  .option("--json", "Output as JSON")
-  .action(async (opts) => {
+  .action(async (_opts, cmd) => {
+    const globals: GlobalOpts = cmd.optsWithGlobals();
     const checks: Check[] = [];
-    const isJson = opts.json || !process.stdout.isTTY;
+    const isJson = globals.json || globals.quiet || !process.stdout.isTTY;
 
     // 1. CLI Version
+    const version = getVersion();
     checks.push({
       name: "CLI Version",
       status: "pass",
-      message: `v${VERSION}`,
+      message: `v${version}`,
     });
 
     // 2. API Key
-    const envKey = process.env.OPALLY_API_KEY;
-    const config = loadConfig();
-    const key = envKey || config.api_key;
+    const resolved = resolveApiKey(globals.apiKey);
 
-    if (key) {
-      const source = envKey ? "env" : "config";
-      const masked = key.slice(0, 12) + "..." + key.slice(-4);
+    if (resolved) {
       checks.push({
         name: "API Key",
         status: "pass",
-        message: `${masked} (source: ${source})`,
+        message: `${maskKey(resolved.key)} (source: ${resolved.source})`,
       });
     } else {
       checks.push({
         name: "API Key",
         status: "fail",
-        message: "No API key found. Run: opally config set-key <key>",
+        message: "No API key found. Run: opally login <key>",
       });
     }
 
@@ -54,10 +51,10 @@ export const doctorCommand = new Command("doctor")
     });
 
     // 4. API Connection
-    if (key) {
+    if (resolved) {
       try {
         const res = await fetch(new URL("/v1/analytics/overview", baseUrl).toString(), {
-          headers: { Authorization: `Bearer ${key}` },
+          headers: { Authorization: `Bearer ${resolved.key}` },
         });
         if (res.ok) {
           checks.push({
@@ -78,7 +75,7 @@ export const doctorCommand = new Command("doctor")
             message: `Unexpected response (HTTP ${res.status})`,
           });
         }
-      } catch (err) {
+      } catch {
         checks.push({
           name: "API Connection",
           status: "fail",
@@ -101,9 +98,9 @@ export const doctorCommand = new Command("doctor")
     } else {
       console.log("\n  Opally Doctor\n");
       for (const check of checks) {
-        const icon = check.status === "pass" ? "\x1b[32m✔\x1b[0m"
-          : check.status === "warn" ? "\x1b[33m!\x1b[0m"
-          : "\x1b[31m✖\x1b[0m";
+        const icon = check.status === "pass" ? pc.green("✔")
+          : check.status === "warn" ? pc.yellow("!")
+          : pc.red("✖");
         console.log(`  ${icon} ${check.name}: ${check.message}`);
       }
       console.log();

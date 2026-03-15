@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { api, validateId, type PaginatedResponse, type SingleResponse } from "../client.js";
-import { output, getFormat } from "../output.js";
+import { output, getFormat, paginationHint, type GlobalOpts } from "../output.js";
+import { withSpinner } from "../lib/spinner.js";
 
 interface EmailLog {
   id: string;
@@ -32,35 +33,33 @@ emailsCommand
   .option("--status <status>", "Filter: processed, draft_created, filtered, spam_filtered, paired, deduplicated")
   .option("--limit <n>", "Results per page (1-100)")
   .option("--cursor <cursor>", "Pagination cursor")
-  .option("--json", "Output as JSON")
-  .action(async (opts) => {
-    const fmt = getFormat(opts);
-    const res = await api<PaginatedResponse<EmailLog>>("/conversations/emails", {
-      from: opts.from,
-      to: opts.to,
-      status: opts.status,
-      limit: opts.limit,
-      cursor: opts.cursor,
-    });
-    output(res.data, fmt, [
-      "id",
-      "subject",
-      "sender",
-      "status",
-      "timestamp",
-    ]);
-    if (fmt === "table" && res.pagination.has_more) {
-      console.log(`\nMore results available. Use --cursor ${res.pagination.next_cursor}`);
-    }
+  .action(async (opts, cmd) => {
+    const globals: GlobalOpts = cmd.optsWithGlobals();
+    const fmt = getFormat(globals);
+    const res = await withSpinner(
+      { loading: "Fetching emails...", success: "Emails loaded", fail: "Failed to fetch emails" },
+      () => api<PaginatedResponse<EmailLog>>("/conversations/emails", {
+        from: opts.from,
+        to: opts.to,
+        status: opts.status,
+        limit: opts.limit,
+        cursor: opts.cursor,
+      }, globals.apiKey)
+    );
+    output(res.data, fmt, ["id", "subject", "sender", "status", "timestamp"]);
+    if (fmt === "table") paginationHint(res.pagination.next_cursor);
   });
 
 emailsCommand
   .command("get <id>")
   .description("Get email details with draft")
-  .option("--json", "Output as JSON")
-  .action(async (id: string, opts) => {
-    const fmt = getFormat(opts);
-    const res = await api<SingleResponse<EmailDetail>>(`/conversations/emails/${validateId(id)}`);
+  .action(async (id: string, opts, cmd) => {
+    const globals: GlobalOpts = cmd.optsWithGlobals();
+    const fmt = getFormat(globals);
+    const res = await withSpinner(
+      { loading: "Fetching email...", success: "Email loaded", fail: "Failed to fetch email" },
+      () => api<SingleResponse<EmailDetail>>(`/conversations/emails/${validateId(id)}`, undefined, globals.apiKey)
+    );
     const data = res.data;
 
     if (fmt === "json") {

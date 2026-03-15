@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { api, validateId, type PaginatedResponse, type SingleResponse } from "../client.js";
-import { output, getFormat } from "../output.js";
+import { output, getFormat, paginationHint, type GlobalOpts } from "../output.js";
+import { withSpinner } from "../lib/spinner.js";
 
 interface Lead {
   id: string;
@@ -33,33 +34,31 @@ leadsCommand
   .option("--source <source>", "Filter: chat, voice, whatsapp, messenger, instagram")
   .option("--limit <n>", "Results per page (1-100)")
   .option("--cursor <cursor>", "Pagination cursor")
-  .option("--json", "Output as JSON")
-  .action(async (opts) => {
-    const fmt = getFormat(opts);
-    const res = await api<PaginatedResponse<Lead>>("/leads", {
-      from: opts.from,
-      to: opts.to,
-      source: opts.source,
-      limit: opts.limit,
-      cursor: opts.cursor,
-    });
-    output(res.data, fmt, [
-      "id",
-      "name",
-      "email",
-      "source",
-      "created_at",
-    ]);
-    if (fmt === "table" && res.pagination.has_more) {
-      console.log(`\nMore results available. Use --cursor ${res.pagination.next_cursor}`);
-    }
+  .action(async (opts, cmd) => {
+    const globals: GlobalOpts = cmd.optsWithGlobals();
+    const fmt = getFormat(globals);
+    const res = await withSpinner(
+      { loading: "Fetching leads...", success: "Leads loaded", fail: "Failed to fetch leads" },
+      () => api<PaginatedResponse<Lead>>("/leads", {
+        from: opts.from,
+        to: opts.to,
+        source: opts.source,
+        limit: opts.limit,
+        cursor: opts.cursor,
+      }, globals.apiKey)
+    );
+    output(res.data, fmt, ["id", "name", "email", "source", "created_at"]);
+    if (fmt === "table") paginationHint(res.pagination.next_cursor);
   });
 
 leadsCommand
   .command("get <id>")
   .description("Get lead details")
-  .option("--json", "Output as JSON")
-  .action(async (id: string, opts) => {
-    const res = await api<SingleResponse<LeadDetail>>(`/leads/${validateId(id)}`);
-    output(res.data, getFormat(opts));
+  .action(async (id: string, opts, cmd) => {
+    const globals: GlobalOpts = cmd.optsWithGlobals();
+    const res = await withSpinner(
+      { loading: "Fetching lead...", success: "Lead loaded", fail: "Failed to fetch lead" },
+      () => api<SingleResponse<LeadDetail>>(`/leads/${validateId(id)}`, undefined, globals.apiKey)
+    );
+    output(res.data, getFormat(globals));
   });
