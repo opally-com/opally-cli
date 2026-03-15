@@ -1,3 +1,9 @@
+function formatValue(val: unknown): string {
+  if (val === null || val === undefined) return "";
+  if (typeof val === "object") return JSON.stringify(val);
+  return String(val);
+}
+
 export function table(
   rows: Record<string, unknown>[],
   columns?: string[]
@@ -13,7 +19,7 @@ export function table(
   const widths = cols.map((col) =>
     Math.max(
       col.length,
-      ...rows.map((row) => String(row[col] ?? "").length)
+      ...rows.map((row) => formatValue(row[col]).length)
     )
   );
 
@@ -27,7 +33,7 @@ export function table(
   // Rows
   for (const row of rows) {
     const line = cols
-      .map((col, i) => String(row[col] ?? "").padEnd(widths[i]))
+      .map((col, i) => formatValue(row[col]).padEnd(widths[i]))
       .join("  ");
     console.log(line);
   }

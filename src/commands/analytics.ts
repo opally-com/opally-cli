@@ -44,7 +44,8 @@ analyticsCommand
           if (typeof val === "object" && val !== null) {
             console.log(`  ${key}:`);
             for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
-              console.log(`    ${k}: ${v}`);
+              const display = typeof v === "object" && v !== null ? JSON.stringify(v) : v;
+              console.log(`    ${k}: ${display}`);
             }
           } else {
             console.log(`  ${key}: ${val}`);
