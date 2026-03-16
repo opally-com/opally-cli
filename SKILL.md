@@ -1,3 +1,8 @@
+---
+name: opally
+description: Query guest conversations, email activity, voice calls, leads, and analytics via the Opally CLI.
+---
+
 # Opally
 
 AI-powered receptionist platform for the hospitality industry. Query guest conversations, email activity, voice calls, leads, and analytics.
